@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beneficios y Reintegros | bimco - Mutual Coyspu</title>
+  <meta name="description" content="Consultá los comercios adheridos, descuentos y reintegros vigentes pagando con bimco, la billetera virtual de Mutual Coyspu en Marcos Juárez." />
+
+  <!-- Tipografía Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            bimco: {
+              dark: '#173827',
+              darker: '#102a1d',
+              lime: '#8cc63f',
+              limeHover: '#7ab530',
+              limeLight: '#a4d45e',
+              bg: '#f4f6f1',
+              border: '#e4e9df',
+              muted: '#5a6b61',
+              footer: '#6f6659',
+            },
+          },
+          boxShadow: {
+            card: '0 8px 24px rgba(23, 56, 39, 0.06)',
+            cardHover: '0 14px 30px rgba(23, 56, 39, 0.11)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- PapaParse para leer y parsear el CSV de Google Sheets -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    /* Utilidad para ocultar barras de scroll en carruseles horizontales de chips */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-bimco-bg text-bimco-dark font-sans antialiased min-h-screen flex flex-col selection:bg-bimco-lime/30 selection:text-bimco-dark">
+  <!-- =========================================================
+       HERO COMPACTO EN VERDE BOSQUE OSCURO
+       ========================================================= -->
+  <section class="relative overflow-hidden bg-gradient-to-br from-bimco-dark via-bimco-dark to-bimco-darker text-white">
+    <!-- Detalles decorativos sutiles tipo bokeh verde -->
+    <div class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-bimco-lime/15 blur-3xl"></div>
+    <div class="pointer-events-none absolute -bottom-24 -left-16 w-64 h-64 rounded-full bg-bimco-lime/10 blur-3xl"></div>
+
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+        <div class="max-w-2xl">
+          <!-- Píldora superior -->
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-bimco-limeLight text-xs font-bold tracking-wider uppercase mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-bimco-lime"></span>
+            <span>BENEFICIOS EXCLUSIVOS</span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight leading-tight text-white">
+            Beneficios y reintegros con <span class="text-bimco-lime">bimco</span>
+          </h1>
+
+          <p class="mt-3 text-sm sm:text-base text-white/80 leading-relaxed max-w-xl">
+            Pagá con tu billetera virtual y aprovechá reintegros todos los días en comercios locales adheridos.
+          </p>
+        </div>
+
+        <!-- Indicador dinámico del día actual y comercios vigentes hoy -->
+        <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-[20px] px-5 py-4 flex items-center gap-4 self-start lg:self-auto shrink-0">
+          <div class="w-12 h-12 rounded-2xl bg-bimco-lime text-bimco-dark flex items-center justify-center shrink-0 shadow-sm">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block px-2 py-0.5 rounded-full bg-bimco-lime text-bimco-dark text-[10px] font-extrabold uppercase tracking-wider">
+                HOY
+              </span>
+              <span id="hero-today-name" class="text-sm font-bold text-white capitalize">
+                Cargando...
+              </span>
+            </div>
+            <p id="hero-today-count" class="text-xs sm:text-sm text-white/80 mt-0.5">
+              Buscando promociones vigentes...
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       CONTENIDO PRINCIPAL: FILTROS + LISTADO AGRUPADO POR RUBRO
+       ========================================================= -->
+  <main id="beneficios" class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+    <!-- Panel de Controles y Filtros -->
+    <section aria-label="Filtros de promociones" class="bg-white rounded-[20px] border border-bimco-border shadow-card p-4 sm:p-6 mb-8 space-y-5">
+
+      <!-- Fila 1: Filtro por Día -->
+      <div>
+        <div class="flex items-center justify-between gap-2 mb-2.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-bimco-muted">
+            Filtrar por día
+          </span>
+          <span id="active-day-hint" class="text-xs font-semibold text-bimco-dark hidden sm:inline">
+            Mostrando beneficios de hoy
+          </span>
+        </div>
+
+        <div id="day-filter-bar" class="flex flex-wrap items-center gap-2">
+          <!-- Botones renderizados dinámicamente por JS -->
+        </div>
+      </div>
+
+      <!-- Separador -->
+      <div class="border-t border-bimco-border"></div>
+
+      <!-- Fila 2: Buscador + Chips de Rubro -->
+      <div class="space-y-4">
+        <!-- Buscador en tiempo real -->
+        <div class="relative">
+          <label for="search-input" class="sr-only">Buscar comercio o rubro</label>
+          <div class="pointer-events-none absolute inset-y-0 left-0 pl-4 flex items-center text-bimco-muted">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
+            </svg>
+          </div>
+          <input
+            id="search-input"
+            type="text"
+            autocomplete="off"
+            placeholder="Buscá por nombre de comercio o rubro (ej: heladería, bar, indumentaria)..."
+            class="w-full pl-11 pr-11 py-3 bg-bimco-bg border border-bimco-border rounded-2xl text-sm sm:text-base text-bimco-dark placeholder:text-bimco-muted/75 focus:outline-none focus:ring-2 focus:ring-bimco-lime focus:border-bimco-lime transition"
+          />
+          <button
+            id="clear-search-btn"
+            type="button"
+            aria-label="Borrar búsqueda"
+            class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-bimco-muted hover:text-bimco-dark transition-colors"
+          >
+            <span class="w-7 h-7 rounded-full bg-white border border-bimco-border flex items-center justify-center shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Chips dinámicos de Rubro -->
+        <div>
+          <span class="block text-xs font-bold uppercase tracking-wider text-bimco-muted mb-2.5">
+            Rubros
+          </span>
+          <div id="rubro-chips" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <!-- Chips generados dinámicamente desde el CSV -->
+            <div class="h-9 w-32 rounded-full bg-bimco-bg animate-pulse"></div>
+            <div class="h-9 w-24 rounded-full bg-bimco-bg animate-pulse"></div>
+            <div class="h-9 w-28 rounded-full bg-bimco-bg animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Barra de estado / contador de resultados -->
+    <div id="results-bar" class="hidden flex flex-wrap items-center justify-between gap-3 mb-6">
+      <p id="results-counter" class="text-sm font-semibold text-bimco-muted"></p>
+      <button
+        id="quick-reset-btn"
+        type="button"
+        class="hidden text-xs sm:text-sm font-bold text-bimco-dark hover:text-bimco-limeHover underline underline-offset-4 transition-colors"
+      >
+        Ver todos los días y rubros
+      </button>
+    </div>
+
+    <!-- Estado de Carga (Skeleton Cards) -->
+    <div id="loading-state" class="space-y-8">
+      <div>
+        <div class="h-7 w-48 bg-white border border-bimco-border rounded-xl animate-pulse mb-4"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- 6 tarjetas skeleton -->
+          <div class="bg-white rounded-[20px] border border-bimco-border p-5 shadow-card space-y-4 animate-pulse">
+            <div class="flex justify-between items-center">
+              <div class="h-7 w-32 bg-bimco-bg rounded-full"></div>
+              <div class="h-6 w-12 bg-bimco-bg rounded-full"></div>
+            </div>
+            <div class="h-6 w-3/4 bg-bimco-bg rounded-lg"></div>
+            <div class="h-4 w-1/2 bg-bimco-bg rounded-lg"></div>
+            <div class="flex gap-1.5 pt-2">
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-[20px] border border-bimco-border p-5 shadow-card space-y-4 animate-pulse">
+            <div class="flex justify-between items-center">
+              <div class="h-7 w-32 bg-bimco-bg rounded-full"></div>
+              <div class="h-6 w-12 bg-bimco-bg rounded-full"></div>
+            </div>
+            <div class="h-6 w-2/3 bg-bimco-bg rounded-lg"></div>
+            <div class="h-4 w-2/5 bg-bimco-bg rounded-lg"></div>
+            <div class="flex gap-1.5 pt-2">
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-[20px] border border-bimco-border p-5 shadow-card space-y-4 animate-pulse hidden lg:block">
+            <div class="flex justify-between items-center">
+              <div class="h-7 w-32 bg-bimco-bg rounded-full"></div>
+              <div class="h-6 w-12 bg-bimco-bg rounded-full"></div>
+            </div>
+            <div class="h-6 w-4/5 bg-bimco-bg rounded-lg"></div>
+            <div class="h-4 w-1/2 bg-bimco-bg rounded-lg"></div>
+            <div class="flex gap-1.5 pt-2">
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+              <div class="h-7 w-7 rounded-full bg-bimco-bg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado de Error de Red o CSV Vacío -->
+    <div id="error-state" class="hidden bg-white rounded-[20px] border border-bimco-border shadow-card p-8 sm:p-12 text-center max-w-lg mx-auto">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-bimco-bg text-bimco-dark flex items-center justify-center mb-4">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+      </div>
+      <h2 id="error-title" class="text-xl font-extrabold text-bimco-dark mb-2">
+        No pudimos cargar las promociones
+      </h2>
+      <p id="error-message" class="text-sm text-bimco-muted mb-6">
+        Verificá tu conexión a internet o intentá nuevamente en unos instantes.
+      </p>
+      <button
+        id="retry-btn"
+        type="button"
+        class="inline-flex items-center justify-center gap-2 bg-bimco-lime hover:bg-bimco-limeHover text-bimco-dark font-bold text-sm px-6 py-3 rounded-full transition-colors shadow-sm"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>Reintentar</span>
+      </button>
+    </div>
+
+    <!-- Estado Sin Resultados para los filtros actuales -->
+    <div id="empty-filter-state" class="hidden bg-white rounded-[20px] border border-bimco-border shadow-card p-8 sm:p-12 text-center max-w-xl mx-auto">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-bimco-bg text-bimco-muted flex items-center justify-center mb-4">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18a7.5 7.5 0 006.15-3.35z" />
+        </svg>
+      </div>
+      <h2 class="text-lg sm:text-xl font-extrabold text-bimco-dark mb-2">
+        No encontramos comercios con esos filtros
+      </h2>
+      <p id="empty-filter-subtitle" class="text-sm text-bimco-muted mb-6">
+        Probá buscando otro nombre o revisando los beneficios disponibles en otros días de la semana.
+      </p>
+      <button
+        id="reset-filters-btn"
+        type="button"
+        class="inline-flex items-center justify-center gap-2 bg-bimco-lime hover:bg-bimco-limeHover text-bimco-dark font-bold text-sm px-6 py-3 rounded-full transition-colors shadow-sm"
+      >
+        Ver todos los días / Limpiar filtros
+      </button>
+    </div>
+
+    <!-- Contenedor principal de Rubros y Tarjetas -->
+    <div id="promos-container" class="space-y-10">
+      <!-- Renderizado dinámicamente por JS -->
+    </div>
+  </main>
+
+  <!-- =========================================================
+       FOOTER MUTUAL COYSPU (GRIS TOPO CÁLIDO #6f6659)
+       ========================================================= -->
+  <footer class="bg-bimco-footer text-white mt-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <!-- Marca -->
+        <div>
+          <div class="text-3xl font-extrabold tracking-tight text-white leading-none">
+            bimco
+          </div>
+          <p class="text-xs font-bold uppercase tracking-widest text-bimco-limeLight mt-1">
+            Mutual Coyspu
+          </p>
+          <p class="text-sm text-white/85 mt-3 leading-relaxed max-w-xs">
+            La billetera virtual pensada para nuestra comunidad. Pagá, ahorrá y disfrutá beneficios en comercios locales.
+          </p>
+        </div>
+
+        <!-- Oficina -->
+        <div>
+          <h3 class="text-sm font-bold uppercase tracking-wider text-bimco-limeLight mb-3">
+            Oficina
+          </h3>
+          <p class="text-sm text-white/90 leading-relaxed">
+            Italia 160 (X2580AJB)<br />
+            Marcos Juárez, Córdoba, Argentina.
+          </p>
+        </div>
+
+        <!-- Horarios de Atención -->
+        <div>
+          <h3 class="text-sm font-bold uppercase tracking-wider text-bimco-limeLight mb-3">
+            Horarios de Atención
+          </h3>
+          <p class="text-sm text-white/90 leading-relaxed">
+            Lunes a Viernes<br />
+            07:30 a 13:00 hs<br />
+            15:00 a 17:30 hs
+          </p>
+        </div>
+      </div>
+
+      <div class="border-t border-white/15 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/75">
+        <p>© <span id="footer-year"></span> Mutual Coyspu — bimco. Todos los derechos reservados.</p>
+        <p>Los reintegros y topes están sujetos a las condiciones vigentes de cada comercio.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================
+       LÓGICA JAVASCRIPT (FETCH CSV, PARSEO, FILTROS Y RENDER)
+       ========================================================= -->
+  <script>
+    (function () {
+      'use strict';
+
+      // URL exacta del CSV publicado en Google Sheets
+      const CSV_URL =
+        'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcMNVPy0NYsyGUuOvAFjyJxbMsApc_HyKyDrw6_AQ8sc4_B0a_ZYKMA6xbdjqDM1lWwGoME8wCkLUR/pub?gid=0&single=true&output=csv';
+
+      // Definición ordenada de días de la semana (Lunes a Domingo para la UI)
+      const DAYS = [
+        { key: 'lun', short: 'Lun', letter: 'L', full: 'Lunes', jsDay: 1 },
+        { key: 'mar', short: 'Mar', letter: 'M', full: 'Martes', jsDay: 2 },
+        { key: 'mie', short: 'Mié', letter: 'X', full: 'Miércoles', jsDay: 3 },
+        { key: 'jue', short: 'Jue', letter: 'J', full: 'Jueves', jsDay: 4 },
+        { key: 'vie', short: 'Vie', letter: 'V', full: 'Viernes', jsDay: 5 },
+        { key: 'sab', short: 'Sáb', letter: 'S', full: 'Sábado', jsDay: 6 },
+        { key: 'dom', short: 'Dom', letter: 'D', full: 'Domingo', jsDay: 0 },
+      ];
+
+      // Detectar día actual según el navegador del usuario
+      const todayJsIndex = new Date().getDay();
+      const TODAY_OBJ = DAYS.find((d) => d.jsDay === todayJsIndex) || DAYS[0];
+
+      // Estado global de la aplicación
+      const state = {
+        allPromos: [],
+        selectedDay: 'hoy', // 'hoy' | 'todos' | 'lun' | 'mar' | 'mie' | 'jue' | 'vie' | 'sab' | 'dom'
+        selectedRubro: 'todos',
+        searchQuery: '',
+      };
+
+      // Referencias al DOM
+      const els = {
+        heroTodayName: document.getElementById('hero-today-name'),
+        heroTodayCount: document.getElementById('hero-today-count'),
+        dayFilterBar: document.getElementById('day-filter-bar'),
+        activeDayHint: document.getElementById('active-day-hint'),
+        searchInput: document.getElementById('search-input'),
+        clearSearchBtn: document.getElementById('clear-search-btn'),
+        rubroChips: document.getElementById('rubro-chips'),
+        resultsBar: document.getElementById('results-bar'),
+        resultsCounter: document.getElementById('results-counter'),
+        quickResetBtn: document.getElementById('quick-reset-btn'),
+        loadingState: document.getElementById('loading-state'),
+        errorState: document.getElementById('error-state'),
+        errorTitle: document.getElementById('error-title'),
+        errorMessage: document.getElementById('error-message'),
+        retryBtn: document.getElementById('retry-btn'),
+        emptyFilterState: document.getElementById('empty-filter-state'),
+        emptyFilterSubtitle: document.getElementById('empty-filter-subtitle'),
+        resetFiltersBtn: document.getElementById('reset-filters-btn'),
+        promosContainer: document.getElementById('promos-container'),
+        footerYear: document.getElementById('footer-year'),
+      };
+
+      /* ---------------------------------------------------------
+         UTILIDADES DE NORMALIZACIÓN Y FORMATO
+         --------------------------------------------------------- */
+
+      /**
+       * Normaliza texto a minúsculas, sin espacios extra ni tildes.
+       */
+      function normalizeText(value) {
+        return String(value || '')
+          .trim()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+      }
+
+      /**
+       * Escapa caracteres HTML para evitar inyección al renderizar datos externos.
+       */
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      /**
+       * Evalúa un campo booleano proveniente de casillas de Google Sheets.
+       */
+      function parseBooleanCell(value) {
+        const norm = normalizeText(value);
+        return ['true', 'si', '1', 'x', 'yes', 'verdadero'].includes(norm);
+      }
+
+      /**
+       * Formatea el porcentaje asegurando un único signo "%".
+       */
+      function formatPercentage(raw) {
+        const cleaned = String(raw || '').trim();
+        if (!cleaned) return '';
+        return cleaned.includes('%') ? cleaned : `${cleaned}%`;
+      }
+
+      /**
+       * Normaliza URLs de redes sociales agregando https:// si falta el protocolo.
+       */
+      function formatUrl(raw) {
+        const cleaned = String(raw || '').trim();
+        if (!cleaned) return '';
+        if (/^https?:\/\//i.test(cleaned)) {
+          return cleaned;
+        }
+        return `https://${cleaned}`;
+      }
+
+      /**
+       * Detecta una etiqueta amigable para el botón de redes según la URL.
+       */
+      function getSocialLabel(url) {
+        const lower = url.toLowerCase();
+        if (lower.includes('instagram.com') || lower.includes('instagr.am')) return 'Ver Instagram';
+        if (lower.includes('facebook.com') || lower.includes('fb.com')) return 'Ver Facebook';
+        if (lower.includes('wa.me') || lower.includes('whatsapp.com')) return 'WhatsApp';
+        if (lower.includes('tiktok.com')) return 'Ver TikTok';
+        return 'Ver sitio / redes';
+      }
+
+      /**
+       * Parsea una fecha AAAA-MM-DD (o DD/MM/AAAA) a Date local a las 00:00:00.
+       * Devuelve null si está vacía o no es válida.
+       */
+      function parseExpirationDate(raw) {
+        const cleaned = String(raw || '').trim();
+        if (!cleaned) return null;
+
+        // Formato esperado: AAAA-MM-DD
+        const isoMatch = cleaned.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+        if (isoMatch) {
+          const year = parseInt(isoMatch[1], 10);
+          const month = parseInt(isoMatch[2], 10) - 1;
+          const day = parseInt(isoMatch[3], 10);
+          const date = new Date(year, month, day);
+          return isNaN(date.getTime()) ? null : date;
+        }
+
+        // Fallback por si se cargó como DD/MM/AAAA
+        const dmyMatch = cleaned.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+        if (dmyMatch) {
+          const day = parseInt(dmyMatch[1], 10);
+          const month = parseInt(dmyMatch[2], 10) - 1;
+          const year = parseInt(dmyMatch[3], 10);
+          const date = new Date(year, month, day);
+          return isNaN(date.getTime()) ? null : date;
+        }
+
+        return null;
+      }
+
+      /**
+       * Formatea una instancia Date como DD/MM/AAAA.
+       */
+      function formatDateDDMMYYYY(date) {
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+      }
+
+      /**
+       * Verifica si la fecha de vencimiento es estrictamente anterior a hoy.
+       */
+      function isExpired(dateObj) {
+        if (!dateObj) return false;
+        const now = new Date();
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return dateObj.getTime() < todayMidnight.getTime();
+      }
+
+      /* ---------------------------------------------------------
+         CARGA Y PARSEO DEL CSV DESDE GOOGLE SHEETS
+         --------------------------------------------------------- */
+
+      async function loadPromotions() {
+        showLoading(true);
+        els.errorState.classList.add('hidden');
+        els.emptyFilterState.classList.add('hidden');
+        els.promosContainer.innerHTML = '';
+
+        try {
+          const response = await fetch(CSV_URL);
+          if (!response.ok) {
+            throw new Error(`Error HTTP ${response.status}`);
+          }
+
+          const csvText = await response.text();
+          if (!csvText || !csvText.trim()) {
+            throw new Error('EMPTY_CSV');
+          }
+
+          const parsed = Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            transformHeader: (header) => normalizeText(header).replace(/\s+/g, '_'),
+          });
+
+          if (!parsed.data || parsed.data.length === 0) {
+            throw new Error('EMPTY_CSV');
+          }
+
+          const processed = [];
+
+          for (const rawRow of parsed.data) {
+            // Obtener nombre del comercio (omitir filas sin nombre)
+            const nombre = String(rawRow.nombre || rawRow.comercio || '').trim();
+            if (!nombre) continue;
+
+            // Verificar columna "activo" si existe en la planilla
+            if (Object.prototype.hasOwnProperty.call(rawRow, 'activo')) {
+              const rawActivo = normalizeText(rawRow.activo);
+              if (rawActivo === 'false' || rawActivo === 'no' || rawActivo === '0' || rawActivo === 'falso') {
+                continue;
+              }
+            }
+
+            // Verificar vencimiento (ocultar automáticamente si ya venció)
+            const vencimientoDate = parseExpirationDate(rawRow.vencimiento);
+            if (isExpired(vencimientoDate)) {
+              continue;
+            }
+
+            // Rubro
+            const rubro = String(rawRow.rubro || rawRow.categoria || 'Otros').trim() || 'Otros';
+
+            // Porcentaje de reintegro
+            const rawPorcentaje =
+              rawRow.porcentaje ?? rawRow['%reintegro'] ?? rawRow.reintegro ?? rawRow.descuento ?? '';
+            const porcentaje = formatPercentage(rawPorcentaje);
+
+            // Tope de reintegro
+            const tope = String(rawRow.tope ?? rawRow.tope_reintegro ?? '').trim();
+
+            // Días activos (lun..dom)
+            const daysMap = {
+              lun: parseBooleanCell(rawRow.lun),
+              mar: parseBooleanCell(rawRow.mar),
+              mie: parseBooleanCell(rawRow.mie),
+              jue: parseBooleanCell(rawRow.jue),
+              vie: parseBooleanCell(rawRow.vie),
+              sab: parseBooleanCell(rawRow.sab),
+              dom: parseBooleanCell(rawRow.dom),
+            };
+
+            // Redes sociales
+            const redes = formatUrl(rawRow.redes || rawRow.instagram || rawRow.web || '');
+
+            processed.push({
+              nombre,
+              nombreNorm: normalizeText(nombre),
+              rubro,
+              rubroNorm: normalizeText(rubro),
+              porcentaje,
+              tope,
+              days: daysMap,
+              appliesToday: Boolean(daysMap[TODAY_OBJ.key]),
+              redes,
+              vencimientoDate,
+              vencimientoFormatted: vencimientoDate ? formatDateDDMMYYYY(vencimientoDate) : '',
+            });
+          }
+
+          if (processed.length === 0) {
+            showError(
+              'No hay promociones activas en este momento',
+              'La planilla de comercios no tiene beneficios vigentes cargados todavía. Volvé a consultar pronto.'
+            );
+            return;
+          }
+
+          // Ordenar por defecto: primero los que aplican hoy, luego alfabéticamente por nombre
+          processed.sort((a, b) => {
+            if (a.appliesToday !== b.appliesToday) {
+              return a.appliesToday ? -1 : 1;
+            }
+            return a.nombre.localeCompare(b.nombre, 'es');
+          });
+
+          state.allPromos = processed;
+
+          // Actualizar indicadores del Hero
+          updateHeroTodayStats();
+
+          // Renderizar controles y listado inicial
+          renderDayFilterBar();
+          renderRubroChips();
+          renderPromotions();
+        } catch (err) {
+          console.error('Error al cargar promociones de Google Sheets:', err);
+          if (err.message === 'EMPTY_CSV') {
+            showError(
+              'No hay promociones cargadas todavía',
+              'No encontramos datos disponibles en la planilla de beneficios. Podés intentar recargar en unos segundos.'
+            );
+          } else {
+            showError(
+              'No pudimos cargar las promociones',
+              'Ocurrió un problema al conectarnos con el listado de comercios. Verificá tu conexión e intentá nuevamente.'
+            );
+          }
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function showLoading(isLoading) {
+        if (isLoading) {
+          els.loadingState.classList.remove('hidden');
+          els.resultsBar.classList.add('hidden');
+        } else {
+          els.loadingState.classList.add('hidden');
+        }
+      }
+
+      function showError(title, message) {
+        els.errorTitle.textContent = title;
+        els.errorMessage.textContent = message;
+        els.errorState.classList.remove('hidden');
+        els.resultsBar.classList.add('hidden');
+        els.promosContainer.innerHTML = '';
+        els.heroTodayCount.textContent = 'No disponible por el momento';
+      }
+
+      function updateHeroTodayStats() {
+        const todayCount = state.allPromos.filter((p) => p.appliesToday).length;
+        els.heroTodayName.textContent = TODAY_OBJ.full;
+        if (todayCount === 0) {
+          els.heroTodayCount.textContent = 'Sin reintegros específicos hoy — mirá otros días';
+        } else if (todayCount === 1) {
+          els.heroTodayCount.textContent = '1 comercio con reintegro vigente hoy';
+        } else {
+          els.heroTodayCount.textContent = `${todayCount} comercios con reintegro vigente hoy`;
+        }
+      }
+
+      /* ---------------------------------------------------------
+         RENDER DE CONTROLES (DÍAS Y RUBROS)
+         --------------------------------------------------------- */
+
+      function renderDayFilterBar() {
+        const buttons = [];
+
+        // 1. Botón destacado HOY
+        const isHoyActive = state.selectedDay === 'hoy';
+        buttons.push(`
+          <button
+            type="button"
+            data-day="hoy"
+            class="day-btn inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+              isHoyActive
+                ? 'bg-bimco-dark text-white border-bimco-dark shadow-sm'
+                : 'bg-bimco-bg text-bimco-dark border-bimco-border hover:border-bimco-dark/30'
+            }"
+          >
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+              isHoyActive ? 'bg-bimco-lime text-bimco-dark' : 'bg-bimco-lime/30 text-bimco-dark'
+            }">
+              HOY
+            </span>
+            <span>${escapeHtml(TODAY_OBJ.full)}</span>
+          </button>
+        `);
+
+        // 2. Botón Todos los días
+        const isTodosActive = state.selectedDay === 'todos';
+        buttons.push(`
+          <button
+            type="button"
+            data-day="todos"
+            class="day-btn px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+              isTodosActive
+                ? 'bg-bimco-lime text-bimco-dark border-bimco-lime shadow-sm'
+                : 'bg-white text-bimco-muted border-bimco-border hover:text-bimco-dark hover:border-bimco-dark/30'
+            }"
+          >
+            Todos los días
+          </button>
+        `);
+
+        // 3. Botones individuales Lun..Dom
+        for (const day of DAYS) {
+          const isSelected = state.selectedDay === day.key;
+          const isTodayKey = day.key === TODAY_OBJ.key;
+          buttons.push(`
+            <button
+              type="button"
+              data-day="${day.key}"
+              class="day-btn relative px-3.5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+                isSelected
+                  ? 'bg-bimco-lime text-bimco-dark border-bimco-lime shadow-sm'
+                  : 'bg-white text-bimco-muted border-bimco-border hover:text-bimco-dark hover:border-bimco-dark/30'
+              }"
+            >
+              ${day.short}
+              ${
+                isTodayKey && !isSelected
+                  ? '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-bimco-lime border-2 border-white" title="Hoy"></span>'
+                  : ''
+              }
+            </button>
+          `);
+        }
+
+        els.dayFilterBar.innerHTML = buttons.join('');
+
+        // Actualizar texto de ayuda del día activo
+        if (state.selectedDay === 'hoy') {
+          els.activeDayHint.textContent = `Mostrando beneficios de hoy (${TODAY_OBJ.full})`;
+        } else if (state.selectedDay === 'todos') {
+          els.activeDayHint.textContent = 'Mostrando todos los días de la semana';
+        } else {
+          const dayObj = DAYS.find((d) => d.key === state.selectedDay);
+          els.activeDayHint.textContent = dayObj ? `Mostrando beneficios del día ${dayObj.full}` : '';
+        }
+
+        // Eventos click
+        els.dayFilterBar.querySelectorAll('.day-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.selectedDay = btn.getAttribute('data-day');
+            renderDayFilterBar();
+            renderPromotions();
+          });
+        });
+      }
+
+      function renderRubroChips() {
+        // Extraer rubros únicos ordenados alfabéticamente
+        const uniqueRubros = Array.from(new Set(state.allPromos.map((p) => p.rubro))).sort((a, b) =>
+          a.localeCompare(b, 'es')
+        );
+
+        const chips = [];
+
+        // Chip "Todos los rubros"
+        const isAll = state.selectedRubro === 'todos';
+        chips.push(`
+          <button
+            type="button"
+            data-rubro="todos"
+            class="rubro-chip shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+              isAll
+                ? 'bg-bimco-dark text-white border-bimco-dark shadow-sm'
+                : 'bg-bimco-bg text-bimco-muted border-bimco-border hover:text-bimco-dark hover:border-bimco-dark/30'
+            }"
+          >
+            Todos los rubros
+          </button>
+        `);
+
+        for (const rubro of uniqueRubros) {
+          const isSelected = state.selectedRubro === rubro;
+          chips.push(`
+            <button
+              type="button"
+              data-rubro="${escapeHtml(rubro)}"
+              class="rubro-chip shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all border ${
+                isSelected
+                  ? 'bg-bimco-dark text-white border-bimco-dark shadow-sm'
+                  : 'bg-white text-bimco-muted border-bimco-border hover:text-bimco-dark hover:border-bimco-dark/30'
+              }"
+            >
+              ${escapeHtml(rubro)}
+            </button>
+          `);
+        }
+
+        els.rubroChips.innerHTML = chips.join('');
+
+        els.rubroChips.querySelectorAll('.rubro-chip').forEach((chip) => {
+          chip.addEventListener('click', () => {
+            state.selectedRubro = chip.getAttribute('data-rubro');
+            renderRubroChips();
+            renderPromotions();
+          });
+        });
+      }
+
+      /* ---------------------------------------------------------
+         FILTRADO Y RENDER DE TARJETAS AGRUPADAS POR RUBRO
+         --------------------------------------------------------- */
+
+      function getFilteredPromos() {
+        const queryNorm = normalizeText(state.searchQuery);
+
+        return state.allPromos.filter((promo) => {
+          // Filtro por día
+          if (state.selectedDay === 'hoy') {
+            if (!promo.appliesToday) return false;
+          } else if (state.selectedDay !== 'todos') {
+            if (!promo.days[state.selectedDay]) return false;
+          }
+
+          // Filtro por rubro
+          if (state.selectedRubro !== 'todos' && promo.rubro !== state.selectedRubro) {
+            return false;
+          }
+
+          // Filtro por buscador (nombre o rubro)
+          if (queryNorm) {
+            const matchesName = promo.nombreNorm.includes(queryNorm);
+            const matchesRubro = promo.rubroNorm.includes(queryNorm);
+            if (!matchesName && !matchesRubro) return false;
+          }
+
+          return true;
+        });
+      }
+
+      function renderPromotions() {
+        const filtered = getFilteredPromos();
+        const hasActiveFilters =
+          state.selectedDay !== 'todos' || state.selectedRubro !== 'todos' || state.searchQuery.trim() !== '';
+
+        // Mostrar barra de resultados
+        els.resultsBar.classList.remove('hidden');
+        if (filtered.length === 1) {
+          els.resultsCounter.textContent = '1 comercio encontrado';
+        } else {
+          els.resultsCounter.textContent = `${filtered.length} comercios encontrados`;
+        }
+
+        if (hasActiveFilters) {
+          els.quickResetBtn.classList.remove('hidden');
+        } else {
+          els.quickResetBtn.classList.add('hidden');
+        }
+
+        // Si no hay resultados
+        if (filtered.length === 0) {
+          els.promosContainer.innerHTML = '';
+          els.emptyFilterState.classList.remove('hidden');
+
+          if (state.selectedDay === 'hoy' && !state.searchQuery.trim() && state.selectedRubro === 'todos') {
+            els.emptyFilterSubtitle.textContent = `Hoy (${TODAY_OBJ.full}) no hay comercios cargados con reintegro. Podés ver los beneficios de otros días de la semana.`;
+          } else {
+            els.emptyFilterSubtitle.textContent =
+              'Probá buscando otro comercio o limpiando los filtros para ver todos los beneficios vigentes.';
+          }
+          return;
+        }
+
+        els.emptyFilterState.classList.add('hidden');
+
+        // Agrupar comercios por rubro
+        const grouped = new Map();
+        for (const promo of filtered) {
+          if (!grouped.has(promo.rubro)) {
+            grouped.set(promo.rubro, []);
+          }
+          grouped.get(promo.rubro).push(promo);
+        }
+
+        // Ordenar rubros alfabéticamente
+        const sortedRubros = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b, 'es'));
+
+        const sectionsHtml = sortedRubros
+          .map((rubro) => {
+            const items = grouped.get(rubro);
+            // Ordenar comercios dentro del rubro alfabéticamente
+            items.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+            const countLabel = items.length === 1 ? '1 comercio' : `${items.length} comercios`;
+            const cardsHtml = items.map(renderPromoCard).join('');
+
+            return `
+              <section aria-label="Rubro ${escapeHtml(rubro)}">
+                <div class="flex items-center justify-between gap-3 mb-4 pb-2 border-b border-bimco-border">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-bimco-lime shrink-0"></span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-bimco-dark tracking-tight">
+                      ${escapeHtml(rubro)}
+                    </h2>
+                  </div>
+                  <span class="px-3 py-1 rounded-full bg-white border border-bimco-border text-xs font-bold text-bimco-muted shrink-0">
+                    ${countLabel}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  ${cardsHtml}
+                </div>
+              </section>
+            `;
+          })
+          .join('');
+
+        els.promosContainer.innerHTML = sectionsHtml;
+      }
+
+      /**
+       * Construye el HTML de una tarjeta de comercio.
+       */
+      function renderPromoCard(promo) {
+        // Indicador compacto de los 7 días (L M X J V S D)
+        const daysBadgesHtml = DAYS.map((d) => {
+          const isActive = promo.days[d.key];
+          const isToday = d.key === TODAY_OBJ.key;
+
+          let classes = '';
+          let titleText = d.full;
+
+          if (isActive && isToday) {
+            // Día activo y es HOY: resaltado en verde lima con anillo verde oscuro
+            classes = 'bg-bimco-lime text-bimco-dark font-extrabold ring-2 ring-bimco-dark ring-offset-1';
+            titleText = `${d.full} (Hoy - Reintegro activo)`;
+          } else if (isActive) {
+            // Día activo: verde bosque oscuro
+            classes = 'bg-bimco-dark text-white font-bold';
+            titleText = `${d.full} (Reintegro activo)`;
+          } else if (isToday) {
+            // Hoy pero sin promo
+            classes = 'bg-bimco-bg text-bimco-muted/70 font-semibold border border-dashed border-bimco-dark/40';
+            titleText = `${d.full} (Hoy - Sin reintegro)`;
+          } else {
+            // Día inactivo
+            classes = 'bg-bimco-bg text-bimco-muted/50 font-medium';
+            titleText = `${d.full} (Sin reintegro)`;
+          }
+
+          return `
+            <span
+              title="${titleText}"
+              class="w-7 h-7 rounded-full text-[11px] flex items-center justify-center select-none ${classes}"
+            >
+              ${d.letter}
+            </span>
+          `;
+        }).join('');
+
+        // Tope de reintegro (si está cargado)
+        const topeHtml = promo.tope
+          ? `
+            <div class="flex items-center gap-1.5 text-xs sm:text-sm text-bimco-muted">
+              <svg class="w-4 h-4 text-bimco-limeHover shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Tope de reintegro: <strong class="text-bimco-dark font-semibold">${escapeHtml(promo.tope)}</strong></span>
+            </div>
+          `
+          : '';
+
+        // Vencimiento (solo si tiene fecha válida)
+        const vencimientoHtml = promo.vencimientoFormatted
+          ? `
+            <div class="flex items-center gap-1.5 text-xs text-bimco-muted">
+              <svg class="w-3.5 h-3.5 text-bimco-muted/80 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Válido hasta el <strong class="text-bimco-dark font-semibold">${escapeHtml(promo.vencimientoFormatted)}</strong></span>
+            </div>
+          `
+          : '';
+
+        // Botón sutil de redes sociales (solo si tiene link)
+        const redesHtml = promo.redes
+          ? `
+            <div class="pt-3 mt-auto border-t border-bimco-border">
+              <a
+                href="${escapeHtml(promo.redes)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-xs font-bold text-bimco-dark hover:text-bimco-limeHover transition-colors group"
+              >
+                <svg class="w-4 h-4 text-bimco-muted group-hover:text-bimco-limeHover transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                <span>${escapeHtml(getSocialLabel(promo.redes))}</span>
+              </a>
+            </div>
+          `
+          : '';
+
+        // Badge de porcentaje + insignia HOY si aplica hoy
+        const porcentajeLabel = promo.porcentaje ? `${escapeHtml(promo.porcentaje)} REINTEGRO` : 'REINTEGRO';
+
+        return `
+          <article class="bg-white rounded-[20px] border ${
+            promo.appliesToday ? 'border-bimco-lime/60' : 'border-bimco-border'
+          } shadow-card hover:shadow-cardHover transition-all duration-200 p-5 flex flex-col gap-3.5">
+            <!-- Encabezado de tarjeta: Porcentaje + Badge HOY -->
+            <div class="flex items-center justify-between gap-2">
+              <span class="inline-flex items-center px-3.5 py-1.5 rounded-full bg-bimco-dark text-white text-xs sm:text-sm font-extrabold tracking-wide">
+                ${porcentajeLabel}
+              </span>
+              ${
+                promo.appliesToday
+                  ? '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-bimco-lime text-bimco-dark text-[11px] font-extrabold uppercase tracking-wider shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-bimco-dark"></span>HOY</span>'
+                  : ''
+              }
+            </div>
+
+            <!-- Nombre del comercio -->
+            <div>
+              <h3 class="text-lg font-extrabold text-bimco-dark leading-snug">
+                ${escapeHtml(promo.nombre)}
+              </h3>
+            </div>
+
+            <!-- Detalles opcionales (Tope y Vencimiento) -->
+            ${
+              topeHtml || vencimientoHtml
+                ? `<div class="space-y-1.5">${topeHtml}${vencimientoHtml}</div>`
+                : ''
+            }
+
+            <!-- Días de aplicación -->
+            <div class="pt-1">
+              <span class="block text-[11px] font-bold uppercase tracking-wider text-bimco-muted mb-2">
+                Días vigentes
+              </span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${daysBadgesHtml}
+              </div>
+            </div>
+
+            ${redesHtml}
+          </article>
+        `;
+      }
+
+      /* ---------------------------------------------------------
+         EVENTOS E INICIALIZACIÓN
+         --------------------------------------------------------- */
+
+      function resetAllFilters() {
+        state.selectedDay = 'todos';
+        state.selectedRubro = 'todos';
+        state.searchQuery = '';
+        els.searchInput.value = '';
+        els.clearSearchBtn.classList.add('hidden');
+        renderDayFilterBar();
+        renderRubroChips();
+        renderPromotions();
+      }
+
+      // Buscador en tiempo real
+      els.searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        if (state.searchQuery.length > 0) {
+          els.clearSearchBtn.classList.remove('hidden');
+        } else {
+          els.clearSearchBtn.classList.add('hidden');
+        }
+        renderPromotions();
+      });
+
+      // Botón borrar texto del buscador
+      els.clearSearchBtn.addEventListener('click', () => {
+        state.searchQuery = '';
+        els.searchInput.value = '';
+        els.clearSearchBtn.classList.add('hidden');
+        els.searchInput.focus();
+        renderPromotions();
+      });
+
+      // Botones para limpiar filtros y reintentar
+      els.resetFiltersBtn.addEventListener('click', resetAllFilters);
+      els.quickResetBtn.addEventListener('click', resetAllFilters);
+      els.retryBtn.addEventListener('click', loadPromotions);
+
+      // Año dinámico en el footer y carga inicial
+      els.footerYear.textContent = new Date().getFullYear();
+      els.heroTodayName.textContent = TODAY_OBJ.full;
+      renderDayFilterBar();
+      loadPromotions();
+    })();
+  </script>
+</body>
+</html>
